@@ -1,0 +1,1 @@
+[{"id":0,"imageData":["hp_pot1.png",0,0,40,40],"data":["hp_potion","Health Potion 1",10,10]}, {"id":1,"imageData":["hp_pot1.png",0,0,40,40],"data":["armor","Gold Sword","WEAPON",{"Stamina":10}]}, {"id":1,"imageData":["Ornamental Sword.png",0,0,40,40],"data":["armor","Ornamental Sword","WEAPON",{"Attack Power":10}]}]
