@@ -13,66 +13,55 @@ import java.util.Random;
 public abstract class AbstractBattleCharacter extends GameObject implements BattleCharacter
 {
     protected final String name;
-    protected Integer hp, ap, teamID, level, maxhp, maxap;
+    protected int hp, ap, teamID, level, maxHP, maxAP;
     protected Point pos;
     protected Map<String, Integer> attributes;
     protected transient Color statusColor;
-    private transient static Direction direction = new Direction();
-    private static transient Random rnd = new Random();
+    private static transient final Random RANDOM = new Random();
 
     protected AbstractBattleCharacter(final String name, final int stamina, final int ap, final int atk, final int sp, final int dodgeChance, final int critChance,
 			      final int physicalDef, final int magicalDef, final Point pos, int id, String type, int teamID, int level, Color statusColor)
     {
         super(id, type);
         this.name = name;
-        this.maxhp = stamina * 10;
-        this.hp = maxhp;
-        this.maxap = ap;
-	this.ap = ap;
+        this.maxHP = stamina * 10;
+        this.hp = maxHP;
+        this.maxAP = ap;
+        this.ap = ap;
         attributes = new HashMap<>();
         attributes.put("Stamina", stamina);
-	attributes.put("Attack Power", atk);
-	attributes.put("Spell Power", sp);
-	attributes.put("Dodge Chance", dodgeChance);
-	attributes.put("Crit Chance", critChance);
-	attributes.put("Physical Defence", physicalDef);
-	attributes.put("Magical Defence", magicalDef);
-	this.pos = pos;
-	this.level = level;
+        attributes.put("Attack Power", atk);
+        attributes.put("Spell Power", sp);
+        attributes.put("Dodge Chance", dodgeChance);
+        attributes.put("Crit Chance", critChance);
+        attributes.put("Physical Defence", physicalDef);
+        attributes.put("Magical Defence", magicalDef);
+        this.pos = pos;
+        this.level = level;
 
-	this.teamID = teamID;
-	this.statusColor = statusColor;
+        this.teamID = teamID;
+        this.statusColor = statusColor;
     }
 
     protected AbstractBattleCharacter(int level, Point pos, int id, String type, int teamID, Object[] stats){
-	this((String)stats[0], (int)((double)stats[1] * level), (int) ((double)stats[2] * level), (int) ((double)stats[3] * level),
+	    this((String)stats[0], (int)((double)stats[1] * level), (int) ((double)stats[2] * level), (int) ((double)stats[3] * level),
 	     (int) ((double)stats[4] * level), (int) ((double)stats[5]*1), (int) ((double)stats[6]*1),
 	     (int) ((double)stats[7] * level), (int)((double)stats[8] * level / 2), pos, id, type, teamID, level, Color.YELLOW);
     }
-
 
     public int getHP() {
 	return hp;
     }
 
-    public int getMaxHP() { return maxhp; }
+    public int getMaxHP() { return maxHP; }
 
     public int getAP() { return ap; }
 
-    public int getMaxAP(){ return maxap; }
+    public int getMaxAP(){ return maxAP; }
 
     public int getAttribute(String name){
         return attributes.get(name);
    }
-
-    public String getType() {
-	return type;
-    }
-
-    public void buffAttribute(String name, double value){
-       int oldValue = attributes.get(name);
-        attributes.put(name, oldValue + (int) value);
-    }
 
     public Map<String, Integer> getAttributes(){
         return attributes;
@@ -84,13 +73,13 @@ public abstract class AbstractBattleCharacter extends GameObject implements Batt
 
     public void restoreHP(int hp){
         this.hp += hp;
-    	if(this.hp > maxhp){
-    	    this.hp = maxhp;
+    	if(this.hp > maxHP){
+    	    this.hp = maxHP;
     	}
     }
 
     public void restoreAP(){
-        ap = maxap;
+        ap = maxAP;
     }
 
     public void reduceAP(final int i){
@@ -99,22 +88,22 @@ public abstract class AbstractBattleCharacter extends GameObject implements Batt
 
     public int getTeamID() { return teamID; }
 
-	public Color getStatusColor() {
-		return statusColor;
-	}
+    public Color getStatusColor() {
+	    return statusColor;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+	    return name;
+    }
 
-	public void attack(BattleCharacter defender){
+    public void attack(BattleCharacter defender){
 	if(defender != null) {
-	    boolean dodge = rnd.nextInt(100) < attributes.get("Dodge Chance");
+	    boolean dodge = RANDOM.nextInt(100) < attributes.get("Dodge Chance");
 	    if (dodge){
 		System.out.println("Dodged");
 	    }
 	    else{
-		boolean crit = rnd.nextInt(100) < attributes.get("Crit Chance");
+		boolean crit = RANDOM.nextInt(100) < attributes.get("Crit Chance");
 		double damage = (double)attributes.get("Attack Power") / defender.getAttribute("Physical Defence") * 10;
 		if(crit){
 		    damage *= 2;
@@ -128,24 +117,23 @@ public abstract class AbstractBattleCharacter extends GameObject implements Batt
 	}
     }
 
-
-
     public void move(Point p){
 	pos.setLocation(p);
     }
 
-    public Point directionToPoint(Direction.Dir direction){
+    public Point getAdjacentPoint(DirectionMapper.Direction direction){
 	Point newPos = new Point(pos);
-	Point deltaCoord = AbstractBattleCharacter.direction.getdeltaCoord(direction);
+	Point deltaCoord = DirectionMapper.getDeltaCoord(direction);
 	newPos.translate((int) deltaCoord.getX(), (int) deltaCoord.getY());
 	return newPos;
     }
-
 
     public void takeDamage(int damage){
         hp -= damage;
     }
 
-
+    public void setStatusColor(Color statusColor){
+	this.statusColor = statusColor;
+    }
 
 }

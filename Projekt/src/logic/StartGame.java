@@ -26,7 +26,6 @@ public class StartGame
 	    world.loadWorld(worldData, npcData);
 	    String playerData = worldLoader.getJSONData("playerdata", "1");
 	    MapArea currentMap = world.loadPlayer(playerData);
-	    //MapArea map1 = world.getMapArea(0);
 
 	    GameViewer window = new GameViewer();
 	    window.showGame(currentMap, world);

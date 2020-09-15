@@ -13,10 +13,10 @@ public class MapTile extends GameObject
 {
     private int staticObjectID;
     private transient BufferedImage objectImage = null;
-    private Integer[] offset = null, size = null;
+    private int[] offset = null, size = null;
     private boolean collision;
 
-    public MapTile(final int id, final int objectID, Boolean collision) {
+    public MapTile(final int id, final int objectID, boolean collision) {
         super(id, "tiles");
         this.staticObjectID = objectID;
         this.collision = collision;
@@ -24,9 +24,9 @@ public class MapTile extends GameObject
 
     public void setObjectImage(final int id){
         if (staticObjectID != -1) {
-            objectImage = objectData.getImage(id, "static");
-            Double[] imageSize = objectData.getImageSize(id, "static");
-            size = new Integer[] { (int) (imageSize[0] * 1), (int) (imageSize[1] * 1) };
+            objectImage = OBJECT_DATA_HANDLER.getImage(id, "static");
+            double[] imageSize = OBJECT_DATA_HANDLER.getImageSize(id, "static");
+            size = new int[] { (int) (imageSize[0] * 1), (int) (imageSize[1] * 1) };
         }
     }
 
@@ -51,11 +51,7 @@ public class MapTile extends GameObject
         setObjectImage(staticObjectID);
     }
 
-    public Integer[] getOffset() {
-        return offset;
-    }
-
-    public Integer[] getSize() {
+    public int[] getSize() {
         return size;
     }
 

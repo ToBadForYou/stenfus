@@ -12,8 +12,8 @@ public class GenerateItem
     public static void main(String[] args) {
         final int imageScale = 64;
         final int hpRestore = 50;
-        Object[] imageData = {"hp_pot1.png", 0, 0, imageScale, imageScale};
-        Object[] data = {"hp_potion","Health Potion 1", hpRestore};
+        Object[] imageData = new Object[]{"hp_pot1.png", 0, 0, imageScale, imageScale};
+        Object[] data = new Object[]{"hp_potion","Health Potion 1", hpRestore};
 
         ObjectData objects = new ObjectData("items");
 

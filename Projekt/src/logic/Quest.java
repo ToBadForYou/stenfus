@@ -18,13 +18,13 @@ public class Quest
     private int levelRequirement;
     private List<Quest> questsRequirements;
     private KillObjective[] killObjectives;
-    private int xpGain, goldGain;
-    private Integer[] itemRewards;
+    private int xpGain, goldGain; // This field is not being used, but should be in the future.
+    private int[] itemRewards;
     private String name;
     private int id;
 
     public Quest(final int levelRequirement, final List<Quest> questsRequirements, final KillObjective[] killObjectives,
-                 final int xpGain, final int goldGain, final Integer[] itemRewards, final String name, final int id)
+                 final int xpGain, final int goldGain, final int[] itemRewards, final String name, final int id)
     {
         this.levelRequirement = levelRequirement;
         this.questsRequirements = questsRequirements;
@@ -36,39 +36,28 @@ public class Quest
         this.id = id;
     }
 
-    public enum Status{
-        NOT_PICKED_UP, IN_PROGRESS, COMPLETE
-    }
-
     public boolean canPickUP(Player player){
         return player.getLevel() >= levelRequirement && player.getCompletedQuests().containsAll(questsRequirements) && player.getQuestProgress(id) == null;
     }
 
-    public boolean checkForCompletion(List<Integer> questProgresses) {
+    public boolean isCompleted(List<Integer> questProgresses) {
         for (int i = 0; i < killObjectives.length; i++) {
-            if(!killObjectives[i].checkCompletion(questProgresses.get(i))){ return false; }
+            if(!killObjectives[i].isCompleted(questProgresses.get(i))){ return false; }
         }
         return true;
     }
 
     public void gainRewards(Player player){
         player.gainXp(xpGain);
-        for (Integer itemReward : itemRewards) {
+        for (int itemReward : itemRewards) {
             try {
                 player.addItemToInventory(ItemFactory.createItem(itemReward));
             } catch (DataFormatException e){
-                LOGGER.log(Level.WARNING, "Failed to add item to inventory: " + e.getMessage());
-                MessageWindow.showMessage("Failed to add item to inventory: " + e.getMessage(), "Item creation error, itemid: " + itemReward);
+                String logMessage = "Failed to add item to inventory: " + e.getMessage();
+                LOGGER.log(Level.WARNING, logMessage);
+                MessageWindow.showMessage(logMessage, "Item creation error, itemid: " + itemReward);
             }
         }
-    }
-
-    public int getLevelRequirement() {
-        return levelRequirement;
-    }
-
-    public List<Quest> getQuestsRequirements() {
-        return questsRequirements;
     }
 
     public String getName(){ return name; }

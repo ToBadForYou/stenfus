@@ -23,13 +23,17 @@ public class World implements MapListener, Serializable
     private List<MapArea> maps;
     private String name;
     private transient Player player = null; //Spelar objektet laddas in efter skapelsen av World
-    private List<NPC> npcs;
-    public final transient static int TILESIZE = 64; //Statiskt konstant
-    private static List<Quest> allQuests = loadQuests();
+    private List<InteractableCharacter> interactableCharacters;
+    /**
+     * Statiskt konstant för "rut"storleken
+     */
+    public transient static final int TILE_SIZE = 64;
+    private transient static final int DEFAULT_MAP_TILES = 15;
+    private static final List<Quest> ALL_QUESTS = loadQuests();
 
     public World(String name) {
         this.maps = new ArrayList<>();
-        this.npcs = new ArrayList<>();
+        this.interactableCharacters = new ArrayList<>();
         this.name = name;
     }
 
@@ -57,7 +61,7 @@ public class World implements MapListener, Serializable
         player.copyData(loadedPlayer);
         curMap.setPlayer(player);
         curMap.spawnEnemies();
-        setupNPCs(curMap, curMap.getId());
+        setUpNPCs(curMap, curMap.getId());
     }
 
     public MapArea loadPlayer(String playerData){
@@ -75,7 +79,7 @@ public class World implements MapListener, Serializable
         curMap.addMapListener(this);
         curMap.setPlayer(player);
         curMap.spawnEnemies();
-        setupNPCs(curMap, curMap.getId());
+        setUpNPCs(curMap, curMap.getId());
 
         return curMap;
     }
@@ -100,28 +104,28 @@ public class World implements MapListener, Serializable
         player.move(entryPoint);
 
         savePlayer();
-        setupNPCs(newMap, mapID);
+        setUpNPCs(newMap, mapID);
     }
 
-    public void setupNPCs(MapArea map, int mapID){
-        List<NPC> mapNPCs = new ArrayList<>();
-        for (NPC npc : npcs) {
-            if(npc.getmapID() == mapID){ mapNPCs.add(npc); }
+    public void setUpNPCs(MapArea map, int mapID){
+        List<InteractableCharacter> mapInteractableCharacters = new ArrayList<>();
+        for (InteractableCharacter interactableCharacter : interactableCharacters) {
+            if(interactableCharacter.getMapID() == mapID){ mapInteractableCharacters.add(interactableCharacter); }
         }
-        map.setNpcList(mapNPCs);
+        map.setInteractableCharacters(mapInteractableCharacters);
     }
 
     public void loadWorld(String mapData, String npcData) {
         GsonFireBuilder fireBuilder = new GsonFireBuilder();
         fireBuilder.enableHooks(MapTile.class);
         fireBuilder.enableHooks(MapArea.class);
-        fireBuilder.enableHooks(AbstractNPC.class);
+        fireBuilder.enableHooks(AbstractInteractableCharacter.class);
 
         GsonBuilder gsonBuilder = fireBuilder.createGsonBuilder();
         Gson gson = gsonBuilder.create();
 
         maps = gson.fromJson(mapData, new TypeToken<List<MapArea>>() {}.getType());
-        npcs = gson.fromJson(npcData, new TypeToken<List<QuestNPC>>() {}.getType());
+        interactableCharacters = gson.fromJson(npcData, new TypeToken<List<QuestGiver>>() {}.getType());
     }
 
     public void saveWorld(){
@@ -130,7 +134,7 @@ public class World implements MapListener, Serializable
         String mapData = gson.toJson(maps);
         dataSaver.saveJSONData("world", name, mapData);
 
-        String npcData = gson.toJson(npcs);
+        String npcData = gson.toJson(interactableCharacters);
         dataSaver.saveJSONData("worldnpcs", name, npcData);
     }
 
@@ -153,10 +157,10 @@ public class World implements MapListener, Serializable
     }
 
     public static Quest getQuest(int id){
-        return allQuests.get(id);
+        return ALL_QUESTS.get(id);
     }
 
-    public static int getQuestsSize(){return allQuests.size();}
+    public static int getQuestsSize(){return ALL_QUESTS.size();}
 
     public int size(){
         return maps.size();
@@ -164,34 +168,30 @@ public class World implements MapListener, Serializable
 
     public void addEmptyMapArea(){
         MapArea map = new MapArea();
-        map.setupEmptyMapArea(15, 15, size());
+        map.setUpEmptyMapArea(DEFAULT_MAP_TILES, DEFAULT_MAP_TILES, size());
         addMapArea(map);
     }
 
 
     public void toggleNPC(int mapID, int x, int y, int id, List<Integer> questIDs){
         boolean exists = false;
-        NPC existingNPC = null;
-        for (NPC npc : npcs) {
-            if (npc.getId() == id){
-                Point npcPos = (Point)npc.getPos();
-                if (npc.getmapID() == mapID && (int) npcPos.getX() == x && (int) npcPos.getY() == y) {
-                    existingNPC = npc;
+        InteractableCharacter existingInteractableCharacter = null;
+        for (InteractableCharacter interactableCharacter : interactableCharacters) {
+            if (interactableCharacter.getID() == id){
+                Point npcPos = (Point) interactableCharacter.getPos();
+                if (interactableCharacter.getMapID() == mapID && (int) npcPos.getX() == x && (int) npcPos.getY() == y) {
+                    existingInteractableCharacter = interactableCharacter;
                 }
                 exists = true;
                 break;
             }
         }
-        if (exists && existingNPC != null){
-            npcs.remove(existingNPC);
+        if (exists && existingInteractableCharacter != null){
+            interactableCharacters.remove(existingInteractableCharacter);
         } else if (!exists){
-            npcs.add(new QuestNPC(id, mapID, new Point(x, y), questIDs));
+            interactableCharacters.add(new QuestGiver(id, mapID, new Point(x, y), questIDs));
         }
-        setupNPCs(getMapArea(mapID), mapID);
-    }
-
-    public List<NPC> getNpcs() {
-        return npcs;
+        setUpNPCs(getMapArea(mapID), mapID);
     }
 
     @Override

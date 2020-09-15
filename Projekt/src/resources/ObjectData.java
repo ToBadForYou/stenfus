@@ -57,11 +57,13 @@ public class ObjectData
         return (String)savedData.get(id).getImageData()[0];
     }
 
-    public Double[] getImageOffset(int id){
-	return new Double[] {(Double)savedData.get(id).getImageData()[1], (Double)savedData.get(id).getImageData()[2]};
+    public double[] getImageOffset(int id){
+        Object[] imageData = savedData.get(id).getImageData();
+	return new double[] {(double)imageData[1], (double)imageData[2]};
     }
-    public Double[] getImageSize(int id){
-	return new Double[] {(Double)savedData.get(id).getImageData()[3], (Double)savedData.get(id).getImageData()[4]};
+    public double[] getImageSize(int id){
+	Object[] imageData = savedData.get(id).getImageData();
+	return new double[] {(double)imageData[3], (double)imageData[4]};
     }
 
     public Object[] getData(int id){

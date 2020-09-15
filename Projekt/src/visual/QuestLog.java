@@ -16,6 +16,9 @@ import java.util.List;
 public class QuestLog extends JPanel implements MapListener
 {
     private List<Integer>[] questProgress;
+    private static final Font QUEST_FONT = new Font("Arial", Font.PLAIN, 15);
+    private static final Color GREEN = new Color(34,139,34);
+    private static final int START_Y = 15;
 
     public QuestLog(final List<Integer>[] questProgress) {
 	this.questProgress = questProgress;
@@ -24,28 +27,34 @@ public class QuestLog extends JPanel implements MapListener
     @Override public void paintComponent(Graphics g){
 	super.paintComponent(g);
 
-        g.setFont(UIVisuals.QUESTHEAD);
+        g.setFont(UIVisuals.QUEST_HEAD);
         g.setColor(Color.ORANGE);
-        int y = 15;
+        int y = START_Y;
         g.drawString("Quest Log", 5, y);
-        y += 21;
-        g.setFont(UIVisuals.QUEST);
+        final int yPadding = 21;
+        y += yPadding;
+        g.setFont(QUEST_FONT);
 
 	for (int i = 0; i < questProgress.length; i++) {
 	    if (questProgress[i] != null){
 		Quest quest = World.getQuest(i);
-		if(quest.checkForCompletion(questProgress[i])){
-		    g.setColor(new Color(34,139,34));
+		if(quest.isCompleted(questProgress[i])){
+		    g.setColor(GREEN);
 		}
 		else{
 		    g.setColor(Color.BLACK);
 		}
-		g.fillOval(9, y - 11, 8, 8);
-		g.drawString(quest.getName(), 20, y);
-		y += 16;
+		final int x = 20;
+		g.drawString(quest.getName(), x, y);
+		final int dotSize = 8;
+		final int dotY = y - 11;
+		g.fillOval(9, dotY, dotSize, dotSize);
+
+		final int yPadding2 = 16;
+		y += yPadding2;
 		for (int j = 0; j < quest.getKillObjectives().length; j++) {
-		    g.fillRect(17, y - 8, 9, 3);
-		    g.drawString(quest.getKillObjectives()[j].getDescription() + " " + questProgress[i].get(j)+ " / " + quest.getKillObjectives()[j].getGoal(), 28, y);
+		    g.fillRect(x - 3, y - 8, 9, 3);
+		    g.drawString(quest.getKillObjectives()[j].getDescription() + " " + questProgress[i].get(j)+ " / " + quest.getKillObjectives()[j].getGoal(), x + 8, y);
 		    y += 10;
 		}
 	    }
@@ -55,6 +64,6 @@ public class QuestLog extends JPanel implements MapListener
     @Override public void mapChanged(final int i) { repaint(); }
 
     @Override public Dimension getPreferredSize() {
-	return new Dimension(PlayerInformation.STATSWIDTH, 60);
+	return new Dimension(PlayerInformation.PLAYER_INFO_WIDTH, 60);
     }
 }

@@ -19,14 +19,13 @@ public class EnemyAI
 {
     private List<BattleCharacter> enemies;
     private MapArea currentMap;
-    private List<Direction.Dir> directions;
-    private Random rnd;
+    private List<DirectionMapper.Direction> directions;
+    private static final Random RANDOM = new Random();
 
     public EnemyAI(final List<BattleCharacter> enemies, final MapArea currentMap) {
-	this.enemies = enemies;
-	this.currentMap = currentMap;
-	rnd = new Random();
-	directions = Arrays.asList(Direction.Dir.values());
+	    this.enemies = enemies;
+	    this.currentMap = currentMap;
+	    directions = Arrays.asList(DirectionMapper.Direction.values());
     }
 
     public void moveAll(){
@@ -37,9 +36,9 @@ public class EnemyAI
 	        currentMap.moveCharacter(path.get(1), enemy);
 	        enemy.setStatusColor(Color.RED);
 	    }
-	    else if (enemy.checkSkipMove()) {
-		int dir = rnd.nextInt(directions.size());
-		currentMap.moveCharacter(enemy.directionToPoint(directions.get(dir)), enemy);
+	    else if (!enemy.willSkipMove()) {
+		int dir = RANDOM.nextInt(directions.size());
+		currentMap.moveCharacter(enemy.getAdjacentPoint(directions.get(dir)), enemy);
 		enemy.setStatusColor(Color.YELLOW);
 	    }
 	}
@@ -68,8 +67,6 @@ public class EnemyAI
 	}
 	Point target = currentMap.getPlayer().getPos();
 
-
-
 	while(!queue.isEmpty()) {
 	    List<Point> path = queue.remove();
 	    Point node = path.get(path.size() - 1);
@@ -86,8 +83,7 @@ public class EnemyAI
 	return null;
     }
 
-
-    public void tryremoveEnemy(final BattleCharacter bc) {
+    public void tryRemoveEnemy(final BattleCharacter bc) {
         enemies.remove(bc);
     }
 }

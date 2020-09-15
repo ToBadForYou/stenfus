@@ -6,8 +6,8 @@ import logic.MapListener;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.AbstractMap;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -15,17 +15,18 @@ import java.util.Map;
  */
 public class ArmorComponent extends JComponent implements MapListener
 {
-    private HashMap<Armor.Type, Armor> equipped;
-    private EnumMap<Armor.Type, Point> coordMapper;
+    private Map<Armor.Type, Armor> equipped;
+    private AbstractMap<Armor.Type, Point> coordMapper;
 
-    public ArmorComponent(final HashMap<Armor.Type, Armor> equipped) {
+    public ArmorComponent(final Map<Armor.Type, Armor> equipped) {
         this.equipped = equipped;
         coordMapper = new EnumMap<>(Armor.Type.class);
-        int x = (PlayerInformation.STATSWIDTH - AbstractItem.SIZE) / 2;
+        int x = (PlayerInformation.PLAYER_INFO_WIDTH - AbstractItem.SIZE) / 2;
+        int itemSpace = AbstractItem.SIZE * 3 / 2;
         coordMapper.put(Armor.Type.HEAD, new Point(x, 0));
-        coordMapper.put(Armor.Type.CHEST, new Point(x , (int)(AbstractItem.SIZE * 1.5)));
-        coordMapper.put(Armor.Type.LEGS, new Point(x, AbstractItem.SIZE * 3));
-        coordMapper.put(Armor.Type.WEAPON, new Point(x + (int)(AbstractItem.SIZE * 1.5), (int)(AbstractItem.SIZE * 1.5)));
+        coordMapper.put(Armor.Type.CHEST, new Point(x ,itemSpace));
+        coordMapper.put(Armor.Type.LEGS, new Point(x, itemSpace * 2));
+        coordMapper.put(Armor.Type.WEAPON, new Point(x + itemSpace, itemSpace));
     }
 
     @Override protected void paintComponent(Graphics g){
@@ -51,6 +52,6 @@ public class ArmorComponent extends JComponent implements MapListener
     }
 
     @Override public Dimension getPreferredSize(){
-        return new Dimension(PlayerInformation.STATSWIDTH, AbstractItem.SIZE * 2);
+        return new Dimension(PlayerInformation.PLAYER_INFO_WIDTH, AbstractItem.SIZE * 2);
     }
 }

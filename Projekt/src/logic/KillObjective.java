@@ -10,7 +10,6 @@ import java.util.List;
 public class KillObjective
 {
     private int goal;
-    private int value;
     private String description;
     private int enemyID;
 
@@ -20,11 +19,11 @@ public class KillObjective
 	this.enemyID = enemyID;
     }
 
-    public boolean checkCompletion(int value){ return value >= goal; }
+    public boolean isCompleted(int value){ return value >= goal; }
 
     public int updateCompletion(List<Enemy> enemiesKilled, int value){
 	for (Enemy enemy : enemiesKilled) {
-	    if(enemy.getId() == enemyID){
+	    if(enemy.getID() == enemyID){
 	        if (value < goal) {
 		    value++;
 		}
@@ -40,15 +39,7 @@ public class KillObjective
 	return goal;
     }
 
-    public int getValue() {
-	return value;
-    }
-
     public String getDescription() {
 	return description;
-    }
-
-    public int getEnemyID() {
-	return enemyID;
     }
 }

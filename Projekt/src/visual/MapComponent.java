@@ -15,78 +15,93 @@ import java.util.List;
 
 public class MapComponent extends AbstractComponent implements MapListener
 {
+
+    private static final Color BEIGE = new Color(211, 188, 141);
+    private static final Font LEVEL_FONT = new Font("Arial", Font.PLAIN, 8);
+    private static final Font MAP_NAME = new Font("Arial", Font.PLAIN, 20);
+    private static final Font HEALTH_BAR_FONT = new Font("Arial", Font.PLAIN, 10);
+    private static final int AI_TIMER = 500;
     private Player player;
-    private static final int CIRCLERADIE = 15;
+    private static final int CIRCLE_RADIUS = 15;
+    private FontMetrics mapNameFontMetrics = null;
 
     public MapComponent(final MapArea mapArea, final World world) {
-		super(mapArea, world);
-		player = currentMap.getPlayer();
-		//Dessa objekt behöver ej sparas då de används till lyssnare endast
-		new MoveKeyBind("UP", Direction.Dir.NORTH);
-		new MoveKeyBind("DOWN", Direction.Dir.SOUTH);
-		new MoveKeyBind("RIGHT", Direction.Dir.EAST);
-		new MoveKeyBind("LEFT", Direction.Dir.WEST);
-		new OtherKeyBind("ENTER");
-		new OtherKeyBind("SPACE");
-		new OtherKeyBind("Q");
-		for (int i = 0; i < player.getInventory().length; i++) {
-		    new ItemKeyBind(i);
-		}
-		mapArea.addMapListener(this);
+        super(mapArea, world);
+        player = currentMap.getPlayer();
 
-		Timer timer = new Timer(500, new AbstractAction() {
-		    @Override
-		    public void actionPerformed(final ActionEvent actionEvent) {
-			if (currentMap.getCurrentBattle() == null) {
-			    if (currentMap.getEnemyAi() != null) {
-				currentMap.getEnemyAi().moveAll();
-			    }
-			} else {
-			    currentMap.getCurrentBattle().update();
-			    }
-		    }
-		});
-		timer.start();
+	final AbstractKeyBind[] keyBinds = new AbstractKeyBind[]
+	{new MoveKeyBind("UP", DirectionMapper.Direction.NORTH), new MoveKeyBind("DOWN", DirectionMapper.Direction.SOUTH),
+	 new MoveKeyBind("RIGHT", DirectionMapper.Direction.EAST), new MoveKeyBind("LEFT", DirectionMapper.Direction.WEST),
+	 new OtherKeyBind("ENTER"), new OtherKeyBind("SPACE"), new OtherKeyBind("Q")};
+	for (AbstractKeyBind keyBind : keyBinds) {
+	    keyBind.bindKey();
+	}
+
+	for (int i = 0; i < player.getInventory().length; i++) {
+	    ItemKeyBind keyBind = new ItemKeyBind(i);
+	    keyBind.bindKey();
+	}
+	mapArea.addMapListener(this);
+
+	Timer timer = new Timer(AI_TIMER, new AbstractAction() {
+	    @Override
+	    public void actionPerformed(final ActionEvent actionEvent) {
+	        if (currentMap.getCurrentBattle() == null) {
+	            if (currentMap.getEnemyAi() != null) {
+	                currentMap.getEnemyAi().moveAll();
+	            }
+	        } else {
+	            currentMap.getCurrentBattle().update();
+	        }
+	    }
+	});
+	timer.start();
     }
 
     @Override protected void paintComponent(Graphics g) {
 	super.paintComponent(g);
 	paintTiles(g, false);
+	boolean isBattling = currentMap.getCurrentBattle() != null;
 
 	for (List<BattleCharacter> battleCharacters : currentMap.getTeams()) {
-	    if (!battleCharacters.isEmpty() && (currentMap.getCurrentBattle() == null || currentMap.getCurrentBattle().isBattling(battleCharacters.get(0)))){
+	    if (!battleCharacters.isEmpty() && (!isBattling || currentMap.getCurrentBattle().isBattling(battleCharacters.get(0)))){
 		for(BattleCharacter bc : battleCharacters) {
 		    int x = (int) bc.getPos().getX();
 		    int y = (int) bc.getPos().getY();
-		    Double[] imageOffset = GameObject.objectData.getImageOffset(bc.getID(), bc.getType());
-		    g.drawImage(bc.getImage(), x * World.TILESIZE + (int)Math.round(imageOffset[0]), y * World.TILESIZE + (int)Math.round(imageOffset[1]), this);
+		    int tileXPos = x * World.TILE_SIZE;
+		    int tileYPos = y * World.TILE_SIZE;
 
-		    int xSize = (int)(World.TILESIZE/1.15);
+		    double[] imageOffset = GameObject.OBJECT_DATA_HANDLER.getImageOffset(bc.getID(), bc.getType());
+		    g.drawImage(bc.getImage(), tileXPos + (int)Math.round(imageOffset[0]), tileYPos+ (int)Math.round(imageOffset[1]), this);
 
-		    g.setColor(bc.getStatusColor());
-		    g.fillRect(x * World.TILESIZE + 2, y * World.TILESIZE, xSize * bc.getHP() / bc.getMaxHP()- 4, 10);
+		    final int hpBarXSize = World.TILE_SIZE - 8;
+		    final int hpBarYSize = 12;
+		    UIVisuals.drawBar(g, bc.getStatusColor(), tileXPos, tileYPos, hpBarXSize, hpBarYSize,
+				      bc.getHP() / (double)bc.getMaxHP(), Integer.toString(bc.getHP()), HEALTH_BAR_FONT);
+		    UIVisuals.drawCenteredString(g, bc.getName(), Color.WHITE, true, false, false,
+						 new Rectangle(tileXPos + 2, tileYPos - hpBarYSize, hpBarXSize - 4, 10), Color.BLACK, UIVisuals.NAME_FONT);
 
-		    UIVisuals.drawCenteredString(g, Integer.toString(bc.getHP()), Color.BLACK, true, false, true, new Rectangle(x * World.TILESIZE + 2, y * World.TILESIZE, xSize - 4, 10), Color.BLACK, UIVisuals.HEALTHBARFONT);
-		    UIVisuals.drawCenteredString(g, bc.getName(), Color.WHITE, true, false, false, new Rectangle(x * World.TILESIZE + 2, y * World.TILESIZE - 12, xSize - 4, 10), Color.BLACK, UIVisuals.NAMEFONT);
-
-		    g.setColor(UIVisuals.BEIGE);
-		    g.fillOval(x * World.TILESIZE + xSize - 5, y * World.TILESIZE - CIRCLERADIE/6,CIRCLERADIE,CIRCLERADIE);
-
+		    // Drawing level icon
+		    g.setColor(BEIGE);
+		    g.fillOval(tileXPos + hpBarXSize - 5, tileYPos - CIRCLE_RADIUS / 6, CIRCLE_RADIUS, CIRCLE_RADIUS);
 		    g.setColor(Color.BLACK);
-		    g.fillOval(x * World.TILESIZE + xSize - 4,y * World.TILESIZE + 1 - CIRCLERADIE/6,CIRCLERADIE - 2,CIRCLERADIE - 2);
-
-		    UIVisuals.drawCenteredString(g, Integer.toString(bc.getLevel()), Color.WHITE, true, false, false, new Rectangle(x * World.TILESIZE + xSize - 4, y * World.TILESIZE - CIRCLERADIE/6 + 1, CIRCLERADIE, CIRCLERADIE), Color.BLACK, UIVisuals.LEVELFONT);
+		    g.fillOval(tileXPos + hpBarXSize - 4,tileYPos + 1 - CIRCLE_RADIUS / 6, CIRCLE_RADIUS - 2, CIRCLE_RADIUS - 2);
+		    UIVisuals.drawCenteredString(g, Integer.toString(bc.getLevel()), Color.WHITE, true, false, false,
+						 new Rectangle(tileXPos + hpBarXSize - 4, tileYPos - CIRCLE_RADIUS / 6 + 1, CIRCLE_RADIUS, CIRCLE_RADIUS), Color.BLACK, LEVEL_FONT);
 		}
 	    }
 	}
-	if (currentMap.getCurrentBattle() == null) { paintNPCs(g); }
+	if (!isBattling) { paintNPCs(g); }
+
 	paintObjects(g);
 
-	FontMetrics metrics = g.getFontMetrics(UIVisuals.MAPNAME);
+	// Drawing Map Title
+	if (mapNameFontMetrics == null){mapNameFontMetrics = g.getFontMetrics(MAP_NAME);}
 	String mapName = currentMap.getName();
-	int textSizeX = metrics.stringWidth(mapName);
-
-	UIVisuals.drawCenteredString(g, mapName, Color.WHITE, true, true, false, new Rectangle(getWidth()/2, 5, textSizeX, 20), Color.BLACK, UIVisuals.MAPNAME);
+	int textSizeX = mapNameFontMetrics.stringWidth(mapName);
+	final int textSizeY = 20;
+	UIVisuals.drawCenteredString(g, mapName, Color.WHITE, true, true, false,
+				     new Rectangle(getWidth()/2, 5, textSizeX, textSizeY), Color.BLACK, MAP_NAME);
     }
 
     @Override public void mapChanged(int i) {
@@ -97,36 +112,44 @@ public class MapComponent extends AbstractComponent implements MapListener
         repaint();
     }
 
-    private class MoveKeyBind extends AbstractAction
-    {
-	private Direction.Dir direction;
+    private abstract class AbstractKeyBind extends AbstractAction{
+        protected String key;
 
-	private MoveKeyBind(final String key, final Direction.Dir direction) {
-	    this.direction = direction;
+	protected AbstractKeyBind(final String key) {
+	    this.key = key;
+	}
+	protected void bindKey() {
 	    getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(key), key);
 	    getActionMap().put(key, this);
-
 	}
+    }
+
+    private class MoveKeyBind extends AbstractKeyBind
+    {
+	private DirectionMapper.Direction direction;
+
+	private MoveKeyBind(final String key, final DirectionMapper.Direction direction) {
+	    super(key);
+	    this.direction = direction;
+	}
+
 	@Override public void actionPerformed(final ActionEvent actionEvent) {
 
 	    if(currentMap.getCurrentBattle() != null){
 	     	if (player.getAttackState()){
-	     	    currentMap.attemptAttack(player, currentMap.getBattleCharacterAt(player.directionToPoint(direction)));
+	     	    currentMap.attemptAttack(player, currentMap.getBattleCharacterAt(player.getAdjacentPoint(direction)));
 		}
 	     	else currentMap.moveInBattle(direction, player);
 	    }
 	    else {
-	        currentMap.moveCharacter(player.directionToPoint(direction), player);
+	        currentMap.moveCharacter(player.getAdjacentPoint(direction), player);
 	    }
 	}
     }
-    private class OtherKeyBind extends AbstractAction
-    {
-        private String key;
+    private class OtherKeyBind extends AbstractKeyBind {
+
 	private OtherKeyBind(final String key) {
-	    getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(key), key);
-	    getActionMap().put(key, this);
-	    this.key = key;
+	   super(key);
 	}
 	@Override public void actionPerformed(final ActionEvent actionEvent) {
 	    if(key.equals("ENTER")){
@@ -139,15 +162,13 @@ public class MapComponent extends AbstractComponent implements MapListener
 	}
     }
 
-    private class ItemKeyBind extends AbstractAction
+    private class ItemKeyBind extends AbstractKeyBind
     {
         private int i;
 
 	private ItemKeyBind(final int i) {
+	    super(Integer.toString(i + 1));
 	    this.i = i;
-	    String key = Integer.toString(i + 1);
-	    getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(key), key);
-	    getActionMap().put(key, this);
 	}
 
 

@@ -4,12 +4,17 @@ import logging.Logging;
 import visual.MessageWindow;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
 import java.util.logging.Level;
 
 /**
- * Abstract class for resources
+ * Abstract class for resources, used for loading resources
  */
 public abstract class AbstractResource
 {
@@ -22,24 +27,28 @@ public abstract class AbstractResource
     protected void loadAllResources(String directory){
         if (directory != null) {
             try {
-                File folder = new File(ClassLoader.getSystemResource("./" + directory + "/").toURI());
-                File[] listOfFiles = folder.listFiles();
-
-                for (final File listOfFile : listOfFiles) {
-                    if (listOfFile.isFile()) {
-                        loadResource(listOfFile.getName());
-                    }
+                String fs = File.separator;
+                URI folderURI = ClassLoader.getSystemResource("." + fs + directory + fs).toURI();
+                try (FileSystem fileSystem = (folderURI.getScheme().equals("jar") ? FileSystems.newFileSystem(folderURI, Collections.emptyMap()) : null)) {
+                    Files.walkFileTree(Paths.get(folderURI), new SimpleFileVisitor<>() {
+                        @Override
+                        public FileVisitResult visitFile(Path filePath, BasicFileAttributes fileAttributes) {
+                            loadResource(filePath.getFileName().toString());
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
                 }
-            } catch (URISyntaxException e) {
-                LOGGER.log(Level.WARNING, "Failed to load resource: " + e.getMessage());
-                MessageWindow.showMessage("Failed to load resource: " + e.getMessage(), "Loading error, directory: " + directory);
+            } catch (URISyntaxException | IOException e) {
+                String logMessage = "Failed to load resource: " + e.getMessage();
+                LOGGER.log(Level.WARNING, logMessage);
+                MessageWindow.showMessage(logMessage, "Loading error, directory: " + directory);
             }
         }
     }
 
-
     protected URL getURL(String directory, String fileName){
-        return ClassLoader.getSystemResource("./" + directory + "/" + fileName);
+        String fs = File.separator;
+        return ClassLoader.getSystemResource("." + fs + directory + fs + fileName);
     }
 
     protected abstract void loadResource(String fileName);

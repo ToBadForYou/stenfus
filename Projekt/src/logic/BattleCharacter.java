@@ -1,7 +1,5 @@
 package logic;
 
-import resources.ObjectDataHandler;
-
 import java.awt.*;
 
 /**
@@ -26,7 +24,7 @@ public interface BattleCharacter
 
     void reduceAP(int i);
 
-    Point directionToPoint(Direction.Dir direction);
+    Point getAdjacentPoint(DirectionMapper.Direction direction);
 
     void restoreAP();
 
@@ -45,8 +43,6 @@ public interface BattleCharacter
     int getLevel();
 
     int getMaxHP();
-
-    ObjectDataHandler getObjectData();
 
     boolean isType(String type);
 }

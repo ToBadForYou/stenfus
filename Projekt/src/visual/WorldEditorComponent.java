@@ -1,9 +1,7 @@
 package visual;
 
-
-import logic.ExitPoint;
+import logic.GamePoint;
 import logic.MapArea;
-import logic.SpawnPoint;
 import logic.World;
 
 import java.util.ArrayList;
@@ -21,15 +19,16 @@ import java.awt.event.MouseListener;
 
 public class WorldEditorComponent extends AbstractComponent implements MouseListener
 {
+    private static final Font WORLD_EDITOR_FONT = new Font("Arial", Font.PLAIN, 15);
     private boolean collision;
-    private int tile, object, misc, miscVal, teamID;
+    private int tile, object, misc, miscValue, teamID;
     private List<Integer> questIDs;
 
     public WorldEditorComponent(final World world, final MapArea mapArea) {
 	super(mapArea, world);
 	collision = false;
-		miscVal = 0;
-		teamID = 1;
+	miscValue = 0;
+	teamID = 1;
 	misc = 0;
 	tile = 0;
 	object = 0;
@@ -46,8 +45,8 @@ public class WorldEditorComponent extends AbstractComponent implements MouseList
 	misc = miscID;
     }
 
-    public void setMiscVal(final int miscVal) {
-        this.miscVal = miscVal;
+    public void setMiscValue(final int miscValue) {
+        this.miscValue = miscValue;
     }
 
     public void setCollision(final boolean collision) {
@@ -65,9 +64,9 @@ public class WorldEditorComponent extends AbstractComponent implements MouseList
     public void setQuest(int questID, boolean toggle){
         if(toggle && !questIDs.contains(questID)){
             questIDs.add(questID);
-	} else if (questIDs.contains(questID)){
-            questIDs.remove(Integer.valueOf(questID));
-	}
+		} else if (questIDs.contains(questID)){
+        	questIDs.remove(Integer.valueOf(questID));
+        }
     }
 
     public void setLevel(final int level){
@@ -82,28 +81,28 @@ public class WorldEditorComponent extends AbstractComponent implements MouseList
 
     public void toggleEnemyType(int id, boolean toggle){
     	currentMap.toggleEnemyType(id, toggle);
-	}
+    }
 
-	public List<Integer> getEnemyTypes(){return currentMap.getEnemyTypes();}
+    public List<Integer> getEnemyTypes(){return currentMap.getEnemyTypes();}
 
     private void onMouseClicked(int mouseX, int mouseY, int buttonClicked){
-        int x = mouseX/World.TILESIZE;
-	int y = mouseY/World.TILESIZE;
+        int x = mouseX/World.TILE_SIZE;
+	int y = mouseY/World.TILE_SIZE;
 	if (x >= 0 && x <= currentMap.getWidth() && y >= 0 && y <= currentMap.getHeight()) {
 	    if (buttonClicked == 1) {
 		currentMap.setTile(x, y, tile, collision);
 	    } else if (buttonClicked == 3) {
 		currentMap.setObject(x, y, object, collision);
 	    } else if (buttonClicked == 2) {
-	        if (misc == 2){
-	            if(miscVal != currentMap.getId()) {
-					currentMap.toggleExitPoint(x, y, miscVal);
-				}
-			} else if (misc == 3){
-				world.toggleNPC(currentMap.getId(), x, y, miscVal, questIDs);
-			} else {
-				currentMap.toggleSpawnPoint(x, y, misc, teamID);
-			}
+		if (misc == 2){
+		    if(miscValue != currentMap.getId()) {
+			currentMap.toggleExitPoint(x, y, miscValue);
+		    }
+		} else if (misc == 3){
+		    world.toggleNPC(currentMap.getId(), x, y, miscValue, questIDs);
+		} else {
+		    currentMap.toggleSpawnPoint(x, y, misc, teamID);
+		}
 	    }
 	    repaint();
 	}
@@ -115,22 +114,25 @@ public class WorldEditorComponent extends AbstractComponent implements MouseList
 	paintNPCs(g);
 	paintObjects(g);
 
-	for (SpawnPoint spawnPoint: currentMap.getBattleStartPos()) {
-	    int x = (int)spawnPoint.getX();
-	    int y = (int)spawnPoint.getY();
-	    UIVisuals.drawCenteredString(g, "Battle " + spawnPoint.getTeamID(), Color.BLACK, true, true, true, new Rectangle(x * World.TILESIZE, y * World.TILESIZE,World.TILESIZE, World.TILESIZE/2-6), Color.WHITE, UIVisuals.WORLDEDITORFONT);
-	}
+	List<GamePoint> gamePoints = new ArrayList<>(currentMap.getBattleStartPos());
+	paintPoint(g, gamePoints, "Battle ", 0);
 
-	for (SpawnPoint spawnPoint: currentMap.getEnemySpawns()) {
-	    int x = (int)spawnPoint.getX();
-	    int y = (int)spawnPoint.getY();
-	    UIVisuals.drawCenteredString(g, "Mob " + spawnPoint.getTeamID(), Color.BLACK, true, true, true, new Rectangle(x * World.TILESIZE, y * World.TILESIZE+World.TILESIZE/2+6,World.TILESIZE, World.TILESIZE/2-6), Color.WHITE, UIVisuals.WORLDEDITORFONT);
-	}
+	gamePoints.clear();
+	gamePoints.addAll(currentMap.getEnemySpawns());
+	paintPoint(g, gamePoints, "Mob ", World.TILE_SIZE/2+6);
 
-	for (ExitPoint exitPoint: currentMap.getExitPoints()) {
-	    int x = (int)exitPoint.getX();
-	    int y = (int)exitPoint.getY();
-	    UIVisuals.drawCenteredString(g, "Exit " + exitPoint.getMapAreaID(), Color.BLACK, true, true, true, new Rectangle(x * World.TILESIZE, y * World.TILESIZE+World.TILESIZE/4,World.TILESIZE, World.TILESIZE/2-6), Color.WHITE, UIVisuals.WORLDEDITORFONT);
+	gamePoints.clear();
+	gamePoints.addAll(currentMap.getExitPoints());
+	paintPoint(g, gamePoints, "Exit ", World.TILE_SIZE/4);
+    }
+
+    private void paintPoint(Graphics g, List<GamePoint> points, String text, int yPos){
+	for (GamePoint point: points) {
+	    int x = (int)point.getX();
+	    int y = (int)point.getY();
+	    int halfTileSize = World.TILE_SIZE/2;
+	    UIVisuals.drawCenteredString(g, text + point.getID(), Color.BLACK, true, true,true,
+					 new Rectangle(x * World.TILE_SIZE, y * World.TILE_SIZE + yPos,World.TILE_SIZE, halfTileSize-6), Color.WHITE, WORLD_EDITOR_FONT);
 	}
     }
 

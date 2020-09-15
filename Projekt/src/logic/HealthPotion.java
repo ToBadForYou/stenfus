@@ -8,8 +8,8 @@ public class HealthPotion extends AbstractItem
 {
     private int hpRestore;
 
-    public HealthPotion(final int id, final double hpRestore, final double stacksize) {
-	super(id, (int)stacksize);
+    public HealthPotion(final int id, final double hpRestore, final double stackSize) {
+	super(id, (int)stackSize);
 	this.hpRestore = (int)hpRestore;
     }
 

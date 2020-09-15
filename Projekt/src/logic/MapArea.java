@@ -21,13 +21,13 @@ import java.util.zip.DataFormatException;
 public class MapArea implements Serializable
 {
     private static final Logging LOGGER = new Logging("inventory");
+    private static final double XP_POWER = 1.2;
 
     private MapTile[][] mapTiles = null;
     private List<SpawnPoint> enemySpawns = null, battleStartPos = null;
     private transient int width, height;
     private int id;
     private transient Battle currentBattle = null;
-    private transient static Direction direction = new Direction();
     private int level;
     private transient EnemyAI enemyAi = null;
     private transient Player player = null;
@@ -35,20 +35,20 @@ public class MapArea implements Serializable
     private List<ExitPoint> exitPoints = null;
     private List<Integer> enemyTypes = null;
     private transient List<BattleCharacter>[] teams = null;
-    private transient List<NPC> npcList;
+    private transient List<InteractableCharacter> interactableCharacters;
     private String name;
 
     public MapArea() {
         level = 1;
         name = "";
-        npcList = new ArrayList<>();
+        interactableCharacters = new ArrayList<>();
     }
 
     @PostDeserialize
     public void postDeserializeLogic(){
         height = mapTiles.length;
         width = mapTiles[0].length;
-        npcList = new ArrayList<>();
+        interactableCharacters = new ArrayList<>();
         teams = new List[getMaxTeamID(enemySpawns) + 1];
         teams[0] = new ArrayList<>();
         mapListeners = new ArrayList<>();
@@ -68,12 +68,12 @@ public class MapArea implements Serializable
         }
     }
 
-    public int getMaxTeamID(List<SpawnPoint> list){
-        if(list.isEmpty()){ return 0; }
-        int max = list.get(0).getTeamID();
-        for (int i = 1; i < list.size(); i++) {
-            if(list.get(i).getTeamID() > max){
-                max = list.get(i).getTeamID();
+    public int getMaxTeamID(List<SpawnPoint> spawnPoints){
+        if(spawnPoints.isEmpty()){ return 0; }
+        int max = spawnPoints.get(0).getID();
+        for (int i = 1; i < spawnPoints.size(); i++) {
+            if(spawnPoints.get(i).getID() > max){
+                max = spawnPoints.get(i).getID();
             }
         }
         return max;
@@ -90,13 +90,15 @@ public class MapArea implements Serializable
 
     public boolean attemptAttack(BattleCharacter attacker, BattleCharacter defender){
         if (defender != null && attacker.getAP() >= 2 && currentBattle != null &&
-            attacker.equals(currentBattle.getcurrentBattler())) {
+            attacker.equals(currentBattle.getCurrentBattler())) {
             int dx = (int) (defender.getPos().getX() - attacker.getPos().getX());
             int dy = (int) (defender.getPos().getY() - attacker.getPos().getY());
             if (dx * dx + dy * dy == 1 && defender.getTeamID() != attacker.getTeamID()) {
                 attacker.reduceAP(2);
                 attacker.attack(defender);
-                checkIfDead(defender);
+                if (defender.getHP() <= 0){
+                    killDefender(defender);
+                }
                 notifyListeners(-1);
                 return true;
             }
@@ -105,44 +107,46 @@ public class MapArea implements Serializable
     }
 
     public void cleave(BattleCharacter attacker) {
-        if(attacker.getAP() >= 4 && currentBattle != null && currentBattle.getcurrentBattler().equals(attacker)) {
+        if(attacker.getAP() >= 4 && currentBattle != null && currentBattle.getCurrentBattler().equals(attacker)) {
             attacker.reduceAP(4);
-            for (Direction.Dir direction: Direction.Dir.values()) {
-                BattleCharacter defender = getBattleCharacterAt(attacker.directionToPoint(direction));
+            for (DirectionMapper.Direction direction: DirectionMapper.Direction.values()) {
+                BattleCharacter defender = getBattleCharacterAt(attacker.getAdjacentPoint(direction));
                 if(defender != null){
                     attacker.attack(defender);
-                    checkIfDead(defender);
+                    if(defender.getHP() <= 0) {
+                        killDefender(defender);
+                    }
                 }
             }
             notifyListeners(-1);
         }
     }
 
-    private void checkIfDead(final BattleCharacter defender) {
-        if(defender.getHP() <= 0){
-            teams[defender.getTeamID()].remove(defender);
-            currentBattle.removeBattler(defender);
-            enemyAi.tryremoveEnemy(defender);
-            if(teams[defender.getTeamID()].isEmpty()){
-                if (defender.getTeamID() == player.getTeamID()){ gameOver(); }
-                else{
-                    for (Enemy deadEnemy : currentBattle.getDeadEnemies()) {
-                        player.gainXp((int)Math.pow(deadEnemy.getLevel() * 9, 6 / 5));
-                    }
-                    try {
-                        player.addItemToInventory(ItemFactory.createItem(0));
-                    } catch (DataFormatException e){
-                        LOGGER.log(Level.WARNING, "Failed to add item to inventory: " + e.getMessage());
-                        MessageWindow.showMessage("Failed to add item to inventory: " + e.getMessage(), "Creating item error");
-                    }
-                    player.updateQuests(currentBattle.getDeadEnemies());
+    private void killDefender(final BattleCharacter defender) {
+        teams[defender.getTeamID()].remove(defender);
+        currentBattle.removeBattler(defender);
+        enemyAi.tryRemoveEnemy(defender);
+        if(teams[defender.getTeamID()].isEmpty()){
+            if (defender.getTeamID() == player.getTeamID()){ restartGame(); }
+            else{
+                for (Enemy deadEnemy : currentBattle.getDeadEnemies()) {
+                    player.gainXp((int)Math.pow(deadEnemy.getLevel() * 9, XP_POWER));
                 }
-                currentBattle = null;
+                try {
+                    player.addItemToInventory(ItemFactory.createItem(0));
+                } catch (DataFormatException e){
+                    String logMessage = "Failed to add item to inventory: " + e.getMessage();
+                    LOGGER.log(Level.WARNING, logMessage);
+                    MessageWindow.showMessage(logMessage, "Creating item error");
+                }
+                player.updateQuests(currentBattle.getDeadEnemies());
             }
+            currentBattle = null;
         }
+
     }
 
-    private void gameOver(){
+    private void restartGame(){
         player = null;
         notifyListeners(-2);
         MessageWindow.showMessage("Game Over - Loading from last savepoint", "Player Death");
@@ -154,16 +158,16 @@ public class MapArea implements Serializable
         BattleCharacter opponent = getBattleCharacterAt(p);
 
         if (opponent == null && !getCollisionAt((int) p.getX(), (int) p.getY())) {
-            NPC npc = getNPCAt(p);
-            if (npc != null && currentBattle == null){
+            InteractableCharacter interactableCharacter = getNPCAt(p);
+            if (interactableCharacter != null && currentBattle == null){
                 if(mover.equals(player)) {
-                    npc.interaction(player);
+                    interactableCharacter.interact(player);
                 }
             }
             else {
                 ExitPoint exitPoint = getExitPointAtLocation(p.getX(), p.getY());
                 if (exitPoint != null && currentBattle == null) {
-                    notifyListeners(exitPoint.getMapAreaID());
+                    notifyListeners(exitPoint.getID());
                     mapListeners = new ArrayList<>();
                 } else {
                     mover.move(p);
@@ -179,12 +183,12 @@ public class MapArea implements Serializable
         return false;
     }
 
-    public boolean moveInBattle(final Direction.Dir direction, final BattleCharacter battleCharacter) {
-       return moveInBattle(battleCharacter.directionToPoint(direction), battleCharacter);
+    public boolean moveInBattle(final DirectionMapper.Direction direction, final BattleCharacter battleCharacter) {
+       return moveInBattle(battleCharacter.getAdjacentPoint(direction), battleCharacter);
     }
 
     public boolean moveInBattle(final Point p, final BattleCharacter battleCharacter){
-        if (battleCharacter.getAP() > 0 && battleCharacter.equals(currentBattle.getcurrentBattler()) && moveCharacter(p, battleCharacter)){
+        if (battleCharacter.getAP() > 0 && battleCharacter.equals(currentBattle.getCurrentBattler()) && moveCharacter(p, battleCharacter)){
             battleCharacter.reduceAP(1);
             return true;
         }
@@ -242,7 +246,7 @@ public class MapArea implements Serializable
             if ((int) exitPoint.getX() == x && (int) exitPoint.getY() == y) {
                 removePoint.add(exitPoint);
             }
-            if (exitPoint.getMapAreaID() == mapID){
+            if (exitPoint.getID() == mapID){
                 exists = true;
                 break;
             }
@@ -261,14 +265,14 @@ public class MapArea implements Serializable
 
     public void toggleSpawnPoint(int x, int y, int miscID, int teamID){
         List<SpawnPoint> removePoint = new ArrayList<>();
-        List<SpawnPoint> spawnList;
+        List<SpawnPoint> spawnPoints;
         if (miscID == 0){
-            spawnList = battleStartPos;
+            spawnPoints = battleStartPos;
         }
         else {
-            spawnList = enemySpawns;
+            spawnPoints = enemySpawns;
         }
-        for (SpawnPoint spawnPoint : spawnList) {
+        for (SpawnPoint spawnPoint : spawnPoints) {
 
             if ((int) spawnPoint.getX() == x && (int) spawnPoint.getY() == y) {
                 removePoint.add(spawnPoint);
@@ -276,13 +280,13 @@ public class MapArea implements Serializable
             }
         }
         if (removePoint.isEmpty()) {
-            spawnList.add(new SpawnPoint(x, y, teamID));
+            spawnPoints.add(new SpawnPoint(x, y, teamID));
         } else {
-            spawnList.remove(removePoint.get(0));
+            spawnPoints.remove(removePoint.get(0));
         }
     }
 
-    public void setupEmptyMapArea(int width, int height, int id){
+    public void setUpEmptyMapArea(int width, int height, int id){
         this.width = width;
         this.height = height;
         this.id = id;
@@ -300,7 +304,7 @@ public class MapArea implements Serializable
 
     // Getter Functions
 
-    public List<NPC> getNpcList() { return npcList; }
+    public List<InteractableCharacter> getInteractableCharacters() { return interactableCharacters; }
 
     public String getName() {
         return name;
@@ -346,8 +350,8 @@ public class MapArea implements Serializable
 
     public List<Point> getTileNeighbors(Point p) {
         List<Point> neighbors = new ArrayList<>();
-        for (Direction.Dir dir : Direction.Dir.values()) {
-            Point neighborPoint = direction.translatePoint(dir, new Point(p));
+        for (DirectionMapper.Direction dir : DirectionMapper.Direction.values()) {
+            Point neighborPoint = DirectionMapper.translatePoint(dir, new Point(p));
             BattleCharacter bc = getBattleCharacterAt(neighborPoint);
             if(!getCollisionAt(neighborPoint) && (bc == null || bc.equals(player))){
                 neighbors.add(neighborPoint);
@@ -358,14 +362,14 @@ public class MapArea implements Serializable
 
     public BattleCharacter getBattleCharacterAt(Point p) {
         for (List<BattleCharacter> team : teams) {
-            for (BattleCharacter battlecharacter : team) {
-                if (battlecharacter.getPos().equals(p)) { return battlecharacter; }
+            for (BattleCharacter battleCharacter : team) {
+                if (battleCharacter.getPos().equals(p)) { return battleCharacter; }
             }
         }
         return null;
     }
 
-    public Boolean getCollisionAt(int x, int y) {
+    public boolean getCollisionAt(int x, int y) {
         if (x < 0 || x >= width || y < 0 || y >= height) { return true; }
         return mapTiles[y][x].getCollision();
     }
@@ -374,9 +378,9 @@ public class MapArea implements Serializable
         return getCollisionAt((int)p.getX(), (int)p.getY());
     }
 
-    public NPC getNPCAt(Point p){
-        for (NPC npc : npcList) {
-            if (npc.getPos().equals(p)){ return npc; }
+    public InteractableCharacter getNPCAt(Point p){
+        for (InteractableCharacter interactableCharacter : interactableCharacters) {
+            if (interactableCharacter.getPos().equals(p)){ return interactableCharacter; }
         }
         return null;
     }
@@ -392,7 +396,7 @@ public class MapArea implements Serializable
 
     public ExitPoint getExitPointByMapID(int id){
         for (ExitPoint exitPoint : exitPoints) {
-            if (exitPoint.getMapAreaID() == id) {
+            if (exitPoint.getID() == id) {
                 return exitPoint;
             }
         }
@@ -411,8 +415,8 @@ public class MapArea implements Serializable
         this.level = level;
     }
 
-    public void setNpcList(List<NPC> list){
-        npcList = list;
+    public void setInteractableCharacters(List<InteractableCharacter> interactableCharacters){
+        this.interactableCharacters = interactableCharacters;
     }
 
     public void setPlayer(Player player) {
@@ -425,6 +429,7 @@ public class MapArea implements Serializable
     public void addMapListener(final MapListener mapListener) {
         mapListeners.add(mapListener);
     }
+
 
     private void notifyListeners(int i){
         for (MapListener mapListener : mapListeners) {

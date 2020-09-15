@@ -9,6 +9,9 @@ import io.gsonfire.annotations.PostDeserialize;
 public abstract class AbstractItem extends GameObject implements Item
 {
     protected int stackLimit, stackSize;
+    /**
+     * Size for items UI portion
+     */
     public static final int SIZE = 42;
 
     protected AbstractItem(final int id, final int stackLimit) {
@@ -36,5 +39,4 @@ public abstract class AbstractItem extends GameObject implements Item
 
     public void setStackSize(int i){ stackSize = i; }
 
-    public void decrementStackSize(){ stackSize -= 1; }
 }

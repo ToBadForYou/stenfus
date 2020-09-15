@@ -33,41 +33,48 @@ public class TextResource extends AbstractResource
     }
 
     public void saveJSONData(String type, String fileName, String data){
+        String detailedLog = "Type: " + type + ", file: " + fileName;
+        String savingError = "Saving error: ";
         try {
-            String tempFilePath = System.getProperty("user.dir") + "/Projekt/resources/data/" + type + "/" + fileName + "_temp.txt";
+            String fs = File.separator;
+            String tempFilePath = System.getProperty("user.dir") + fs +"Projekt" + fs + "resources" + fs + "data" + fs + type + fs + fileName + "_temp.txt";
 
             File tempData = new File(tempFilePath);
             if (tempData.createNewFile()) {
-                FileWriter writer = new FileWriter(tempData);
-                try {
+                try(FileWriter writer = new FileWriter(tempData)) {
                     writer.write(data);
-                    writer.close();
                 } catch (IOException e){
-                    LOGGER.log(Level.WARNING, "Failed to write to file: " + e.getMessage());
-                    MessageWindow.showMessage("Failed to write to file: " + e.getMessage(), "Writing error, Type: " + type + ", file: " + fileName);
+                    String logMessage = "Failed to write to file: " + e.getMessage();
+                    LOGGER.log(Level.WARNING, logMessage);
+                    MessageWindow.showMessage(logMessage, "Writing error, " + detailedLog);
                 }
 
-                String filePath = System.getProperty("user.dir") + "/Projekt/resources/data/" + type + "/" + fileName + ".txt";
+                String filePath = System.getProperty("user.dir") + fs + "Projekt" + fs + "resources" + fs + "data" + fs + type + fs + fileName + ".txt";
                 File newName = new File(filePath);
                 if (!tempData.renameTo(newName)) {
-                    LOGGER.log(Level.WARNING, "Failed to rename temp file during saving process for: " + newName);
-                    MessageWindow.showMessage("Failed to rename temp file during saving process", "Saving error, Type: " + type + ", file: " + fileName);
+                    String logMessage = "Failed to rename temp file during saving process for: " + newName;
+                    LOGGER.log(Level.WARNING, logMessage);
+                    MessageWindow.showMessage(logMessage, savingError + detailedLog);
                 }
             } else {
-                LOGGER.log(Level.WARNING, "Failed to create temp file: " + tempFilePath);
-                MessageWindow.showMessage("Failed to create temp file", "Saving error, Type: " + type + ", file: " + fileName);
+                String logMessage = "Failed to create temp file: " + tempFilePath;
+                LOGGER.log(Level.WARNING, logMessage);
+                MessageWindow.showMessage(logMessage, savingError + detailedLog);
             }
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Failed to find file path for file: " + fileName + ", error: " + e.getMessage());
-            MessageWindow.showMessage("Failed to find file path: " + e.getMessage(), "Saving error, Type: " + type + ", file: " + fileName);
+            String logMessage = "Failed to find file path for file: " + fileName + ", error: " + e.getMessage();
+            LOGGER.log(Level.WARNING, logMessage);
+            MessageWindow.showMessage(logMessage, savingError + detailedLog);
         }
     }
 
     private String loadData(final String type, final String fileName) {
+        String detailedLog = "Type: " + type + ", file: " + fileName;
         try {
-            URL fileURL = getURL("data", type + "/" + fileName + ".txt");
+            String fs = File.separator;
+            URL fileURL = getURL("data", type + fs + fileName + ".txt");
             if (fileURL == null) {
-                MessageWindow.showMessage("Failed to find file path", "Loading error, Type: " + type + ", file: " + fileName);
+                MessageWindow.showMessage("Failed to find file path", "Loading error, " + detailedLog);
                 return null;
             }
 
@@ -75,15 +82,16 @@ public class TextResource extends AbstractResource
             File txt = new File(filePath);
             if (txt.exists()){
                 File myObj = new File(filePath);
-                Scanner myReader = new Scanner(myObj);
-                if (myReader.hasNextLine()) {
-                    return myReader.nextLine();
+                try(Scanner myReader = new Scanner(myObj)) {
+                    if (myReader.hasNextLine()) {
+                        return myReader.nextLine();
+                    }
                 }
-                myReader.close();
             }
         } catch (URISyntaxException | FileNotFoundException e) {
-            LOGGER.log(Level.WARNING, "Failed to load file: " + e.getMessage());
-            MessageWindow.showMessage("Failed to load file: " + e.getMessage(), "Loading error, Type: " + type + ", file: " + fileName);
+            String logMessage = "Failed to load file: " + e.getMessage();
+            LOGGER.log(Level.WARNING, logMessage);
+            MessageWindow.showMessage(logMessage, "Loading error, " + detailedLog);
         }
         return null;
     }

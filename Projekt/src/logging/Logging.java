@@ -6,6 +6,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+/**
+ * This is a class that handles the logs of the game
+ */
+
 public class Logging
 {
     private static final Logger LOGGER = Logger.getLogger(Logging.class.getName());
@@ -17,6 +21,7 @@ public class Logging
 	    LOGGER.addHandler(fh);
 	    LOGGER.setLevel(Level.WARNING);
 	} catch (SecurityException | IOException e) {
+	    //We can't log this error, since the log didn't initalize properly
 	    e.printStackTrace();
 	}
     }

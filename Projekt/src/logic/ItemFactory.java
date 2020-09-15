@@ -1,6 +1,5 @@
 package logic;
 
-import resources.ObjectDataHandler;
 import com.google.gson.internal.LinkedTreeMap;
 
 import java.util.zip.DataFormatException;
@@ -11,10 +10,9 @@ import java.util.zip.DataFormatException;
 
 public class ItemFactory
 {
-    private final static ObjectDataHandler DATA_HANDLER = new ObjectDataHandler();
 
     public static Item createItem(int id) throws DataFormatException {
-        Object[] data = DATA_HANDLER.getData(id, "items");
+        Object[] data = GameObject.OBJECT_DATA_HANDLER.getData(id, "items");
         switch((String)data[0]) {
 	    case "hp_potion":
 		return new HealthPotion(id, (Double) data[2], (Double) data[3]);

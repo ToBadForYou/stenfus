@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.List;
 import java.util.logging.Level;
@@ -24,11 +23,12 @@ import java.util.zip.DataFormatException;
 public class Player extends AbstractBattleCharacter
 {
     private static final Logging LOGGER = new Logging("inventory");
+    private static final int BASE_XP = 500;
+    private static final double XP_POWER = 0.9;
 
     private transient boolean attackState;
     private int currentMap;
     private int xp, xpToLevelUp, attributePoints;
-    private static transient Random rnd = new Random();
     private Set<Integer> completedQuests;
     private List<Integer> [] questProgresses;
     private transient Item[] inventory;
@@ -71,7 +71,7 @@ public class Player extends AbstractBattleCharacter
     }
 
     private void calcXpToLevelUp() {
-        xpToLevelUp = (int)Math.pow(level * 500, 0.9);
+        xpToLevelUp = (int)Math.pow(level * BASE_XP, XP_POWER);
     }
 
     public void switchState(){
@@ -81,8 +81,6 @@ public class Player extends AbstractBattleCharacter
     public boolean getAttackState(){
         return attackState;
     }
-
-    public int getID(){return id;}
 
     public void gainXp(int xp){
         this.xp += xp;
@@ -118,7 +116,7 @@ public class Player extends AbstractBattleCharacter
 
     public void updateHPFromStamina(String name, int value){
         if(name.equals("Stamina")) {
-            maxhp += value * 10;
+            maxHP += value * 10;
             hp += value * 10;
         }
     }
@@ -181,7 +179,7 @@ public class Player extends AbstractBattleCharacter
                 if(emptySlot == -1){ emptySlot = i; }
             }
 
-            else if(inventory[i].getId() == item.getId() && inventory[i].getStackSize() < inventory[i].getStackLimit()){
+            else if(inventory[i].getID() == item.getID() && inventory[i].getStackSize() < inventory[i].getStackLimit()){
                 inventory[i].addToStack();
                 return;
             }
@@ -203,8 +201,9 @@ public class Player extends AbstractBattleCharacter
                 item.setStackSize(data[1]);
                 inventory[data[2]] = item;
             } catch (DataFormatException e){
-                LOGGER.log(Level.WARNING, "Failed to load inventory: " + e.getMessage());
-                MessageWindow.showMessage("Failed to load inventory: " + e.getMessage(), "Loading error, itemid: " + data[0] + ", slotid: " + data[2]);
+                String logMessage = "Failed to load inventory: " + e.getMessage();
+                LOGGER.log(Level.WARNING, logMessage);
+                MessageWindow.showMessage(logMessage, "Loading error, itemid: " + data[0] + ", slotid: " + data[2]);
             }
         }
     }
@@ -213,7 +212,7 @@ public class Player extends AbstractBattleCharacter
         savedInventory = new ArrayList<>();
         for (int i = 0; i < inventory.length; i++) {
             if(inventory[i] != null){
-                Integer[] saveData = new Integer[]{inventory[i].getId(), inventory[i].getStackSize(), i};
+                Integer[] saveData = new Integer[]{inventory[i].getID(), inventory[i].getStackSize(), i};
                 savedInventory.add(saveData);
             }
         }

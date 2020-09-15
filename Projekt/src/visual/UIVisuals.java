@@ -9,22 +9,16 @@ import java.awt.*;
 
 public class UIVisuals
 {
-    public static final Font HEALTHBARFONT = new Font("Arial", Font.PLAIN, 10);
-    public static final Font NAMEFONT = new Font("Arial", Font.PLAIN, 10);
-    public static final Font MAPNAME = new Font("Arial", Font.PLAIN, 20);
-    public static final Font LEVELFONT = new Font("Arial", Font.PLAIN, 8);
-    public static final Font ATTRIBUTEUPGRADE = new Font("Arial", Font.PLAIN, 10);
-    public static final Font WORLDEDITORFONT = new Font("Arial", Font.PLAIN, 15);
-    public static final Font WORLDEDITORTITLEFONT = new Font("Arial", Font.BOLD, 18);
-    public static final Font STATSHEADERFONT = new Font("Arial", Font.PLAIN, 20);
-    public static final Font STATSFONT = new Font("Arial", Font.BOLD, 14);
-    public static final Font QUESTHEAD = new Font("Arial", Font.BOLD, 20);
-    public static final Font QUESTSYMBOL = new Font("Arial", Font.BOLD, 23);
-    public static final Font STACKSIZE = new Font("Arial", Font.BOLD, 12);
-    public static final Font QUEST = new Font("Arial", Font.PLAIN, 15);
-    public static final Color BEIGE = new Color(211,188,141);
-    public static final Color PURPLE = new Color(138,43,226);
 
+    /**
+    Public static fields for fonts and colors, having them all stored in one class makes it easier to adjust them as they are
+    just for design purposes
+     */
+    public static final Font NAME_FONT = new Font("Arial", Font.PLAIN, 10);
+    public static final Font STATS_FONT = new Font("Arial", Font.BOLD, 14);
+    public static final Font QUEST_HEAD = new Font("Arial", Font.BOLD, 20);
+
+    private static final int BAR_PADDING = 1;
     /**
      * Draw a String centered in the middle of a Rectangle.
      *
@@ -40,7 +34,7 @@ public class UIVisuals
      * Code modified to satisfy our needs
      * Source: https://stackoverflow.com/questions/27706197/how-can-i-center-graphics-drawstring-in-java
      */
-    public static void drawCenteredString(Graphics g, String text, Color textColor, Boolean centerX, Boolean filled, Boolean drawRectangle, Rectangle rect, Color rectColor, Font font) {
+    public static void drawCenteredString(Graphics g, String text, Color textColor, boolean centerX, boolean filled, boolean drawRectangle, Rectangle rect, Color rectColor, Font font) {
 	g.setColor(rectColor);
 	if(drawRectangle) {
 	    if (filled) {
@@ -58,5 +52,12 @@ public class UIVisuals
 	g.setFont(font);
 	g.setColor(textColor);
 	g.drawString(text, x, y);
+    }
+
+    public static void drawBar(Graphics g, Color filledColor, int rectX, int rectY, int rectSizeX, int rectSizeY, double percentage, String barText, Font stringFont){
+	g.setColor(filledColor);
+	g.fillRect(rectX+BAR_PADDING, rectY+BAR_PADDING, (int)((rectSizeX-BAR_PADDING) * percentage), rectSizeY-BAR_PADDING);
+	drawCenteredString(g, barText, Color.BLACK, true,
+				     false, true, new Rectangle(rectX, rectY, rectSizeX, rectSizeY), Color.BLACK, stringFont);
     }
 }

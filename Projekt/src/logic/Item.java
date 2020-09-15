@@ -3,7 +3,7 @@ package logic;
 import java.awt.*;
 
 /**
- * This interface represents all the different kinds of Items in the game and contains the following methods
+ * This interface represents all the different kinds of Items in the game and contains the following methods.
  */
 
 public interface Item
@@ -12,7 +12,7 @@ public interface Item
 
     Image getImage();
 
-    int getId();
+    int getID();
 
     int getStackLimit();
 
@@ -24,5 +24,4 @@ public interface Item
 
     void setStackSize(int i);
 
-    void decrementStackSize();
 }

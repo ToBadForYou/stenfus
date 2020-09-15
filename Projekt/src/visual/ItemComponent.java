@@ -14,6 +14,7 @@ import java.awt.*;
 public class ItemComponent extends JComponent implements MapListener
 {
 
+    private static final Font STACK_SIZE = new Font("Arial", Font.BOLD, 12);
     private Item[] inventory;
 
     public ItemComponent(final Item[] inventory) {
@@ -22,28 +23,28 @@ public class ItemComponent extends JComponent implements MapListener
 
     @Override protected void paintComponent(Graphics g) {
 	super.paintComponent(g);
-	g.setFont(UIVisuals.QUESTHEAD);
-	g.drawString("Inventory", 5, 20);
-	for (int i = 0; i < inventory.length ; i++) {
+	g.setFont(UIVisuals.QUEST_HEAD);
+	final int y = 20;
+	g.drawString("Inventory", 5, y);
+	for (int x = 0; x < inventory.length ; x++) {
+	    int xPadding = x * (AbstractItem.SIZE - 1);
 	    g.setColor(Color.BLACK);
-	    g.fillRect( 5 + i * (AbstractItem.SIZE - 1), 22, AbstractItem.SIZE, AbstractItem.SIZE);
+	    g.fillRect( 5 + xPadding, y + 2, AbstractItem.SIZE, AbstractItem.SIZE);
 	    g.setColor(Color.WHITE);
-	    g.fillRect( 7 + i * (AbstractItem.SIZE - 1), 24, AbstractItem.SIZE - 4, AbstractItem.SIZE - 4);
-	    if(inventory[i]!= null) {
-		g.drawImage(inventory[i].getImage(), 5 + i * (AbstractItem.SIZE - 1), 24, this);
+	    g.fillRect( 7 + xPadding, y + 4, AbstractItem.SIZE - 4, AbstractItem.SIZE - 4);
+	    if(inventory[x]!= null) {
+		g.drawImage(inventory[x].getImage(), 5 + xPadding, y + 4, this);
 
 		//Drawing Stacksize;
 		g.setColor(Color.BLACK);
-		if(inventory[i].getStackLimit() > 1){
-		    g.setFont(UIVisuals.STACKSIZE);
-		    g.drawString(Integer.toString(inventory[i].getStackSize()),AbstractItem.SIZE - 4 + i * (AbstractItem.SIZE - 1), AbstractItem.SIZE + 17);
+		if(inventory[x].getStackLimit() > 1){
+		    g.setFont(STACK_SIZE);
+		    g.drawString(Integer.toString(inventory[x].getStackSize()),AbstractItem.SIZE - 4 + xPadding, AbstractItem.SIZE + y - 3);
 		}
-
 	    }
-
 	    //Drawing Keybind index
-	    g.setFont(UIVisuals.NAMEFONT);
-	    g.drawString(Integer.toString(i + 1),8 + i * (AbstractItem.SIZE - 1), 32);
+	    g.setFont(UIVisuals.NAME_FONT);
+	    g.drawString(Integer.toString(x + 1),8 + xPadding, y + 12);
 	}
     }
 

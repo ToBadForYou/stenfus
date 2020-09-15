@@ -11,8 +11,8 @@ public class GenerateEnemy
 {
     public static void main(String[] args) {
         final int imageScale = 64;
-        Object[] imageData = {"yellow_eyes_beige_dragon.png", 0, 0, imageScale, imageScale};
-        Object[] data = {"Yellow Eyes Beige Dragon",5,5,5,5,5,5,5,5,5,5,5,5,5,5};
+        Object[] imageData = new Object[]{"yellow_eyes_beige_dragon.png", 0, 0, imageScale, imageScale};
+        Object[] data = new Object[]{"Yellow Eyes Beige Dragon",5,5,5,5,5,5,5,5,5,5,5,5,5,5};
 
         ObjectData objects = new ObjectData("enemies");
 

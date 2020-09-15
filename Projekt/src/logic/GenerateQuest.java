@@ -27,12 +27,12 @@ public class GenerateQuest
         Gson gson = gsonBuilder.create();
 
         String questData = resourceHandler.getJSONData("objects", "quests");
-        List<Quest> questList = gson.fromJson(questData, new TypeToken<List<Quest>>() {}.getType());
+        List<Quest> quests = gson.fromJson(questData, new TypeToken<List<Quest>>() {}.getType());
         KillObjective[] obj = new KillObjective[]{new KillObjective(10, "Kill dregon", 0)};
-        Quest quest = new Quest(0, new ArrayList<>(), obj, 100, 100,  new Integer[] {0},"Dregon kil", questList.size());
-        questList.add(quest);
+        Quest quest = new Quest(0, new ArrayList<>(), obj, 100, 100,  new int[] {0},"Dregon kil", quests.size());
+        quests.add(quest);
 
-        String dataJSON = gson.toJson(questList);
+        String dataJSON = gson.toJson(quests);
         resourceHandler.saveJSONData("objects", "quests", dataJSON);
     }
 }

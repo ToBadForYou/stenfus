@@ -12,38 +12,31 @@ import java.util.Random;
 public class Enemy extends AbstractBattleCharacter
 {
     private EnemyAI enemyAi;
-    private static Random rnd = new Random();
+    private static final Random RANDOM = new Random();
     private int skipMove;
 
-    public Enemy(int level, SpawnPoint spawnPoint, EnemyAI enemyAi, int id)
-    {
-	super(level, new Point(spawnPoint), id, "enemies", spawnPoint.getTeamID(), objectData.getData(id, "enemies"));
+    public Enemy(int level, SpawnPoint spawnPoint, EnemyAI enemyAi, int id) {
+	super(level, new Point(spawnPoint), id, "enemies", spawnPoint.getID(), OBJECT_DATA_HANDLER.getData(id, "enemies"));
 	this.enemyAi = enemyAi;
 	this.skipMove = 0;
     }
 
     public static Enemy randomEnemy(int level, SpawnPoint spawnPoint, EnemyAI enemyAi, List<Integer> enemyTypes){
-        return new Enemy(level, spawnPoint, enemyAi, enemyTypes.get(rnd.nextInt(enemyTypes.size())));
+        return new Enemy(level, spawnPoint, enemyAi, enemyTypes.get(RANDOM.nextInt(enemyTypes.size())));
     }
 
     public EnemyAI getEnemyAi() {
 	return enemyAi;
     }
 
-    public int getID(){return id;}
-
-    public void setStatusColor(Color statusColor){
-        this.statusColor = statusColor;
-    }
-
-    public boolean checkSkipMove(){
+    public boolean willSkipMove(){
         if (skipMove == 5) {
             skipMove = 0;
-            return true;
+            return false;
         }
         else {
             skipMove ++;
-            return false;
+            return true;
         }
 
     }

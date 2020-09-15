@@ -13,30 +13,27 @@ public class Battle
     private List<Enemy> deadEnemies;
 
     public Battle(final List<BattleCharacter> team1, final List<BattleCharacter> team2, List<SpawnPoint> battleStartPos) {
-        List<BattleCharacter> teamA = new ArrayList<>(team1);
-        List<BattleCharacter> teamB = new ArrayList<>(team2);
         this.battlers = new ArrayList<>();
         battlers.addAll(team1);
         battlers.addAll(team2);
         deadEnemies = new ArrayList<>();
+        List<List<BattleCharacter>> teams = new ArrayList<>();
+        teams.add(new ArrayList<>(team1));
+        teams.add(new ArrayList<>(team2));
         for (SpawnPoint spawnPoint : battleStartPos) {
-            int i  = spawnPoint.getTeamID();
+            int i  = spawnPoint.getID();
             BattleCharacter bc = null;
-            if(i == 0){
-                if (!teamA.isEmpty()){ bc = teamA.remove(0); }
-            }
-            else if(i == 1){
-                if (!teamB.isEmpty()){ bc = teamB.remove(0); }
-            }
+            if (!teams.get(i).isEmpty()){ bc = teams.get(i).remove(0); }
+
             if(bc != null){ bc.move(spawnPoint);}
 
-            if(teamA.isEmpty() && teamB.isEmpty()){ break; }
+            if(teams.get(0).isEmpty() && teams.get(1).isEmpty()){ break; }
 
         }
         currentBattlerIndex = 0;
     }
 
-    public BattleCharacter getcurrentBattler(){
+    public BattleCharacter getCurrentBattler(){
         return battlers.get(currentBattlerIndex);
     }
 
@@ -59,15 +56,15 @@ public class Battle
     }
 
     public void endTurn(BattleCharacter bc){
-        if(getcurrentBattler().equals(bc)) {
+        if(getCurrentBattler().equals(bc)) {
             currentBattlerIndex = (currentBattlerIndex + 1) % battlers.size();
-            getcurrentBattler().restoreAP();
+            getCurrentBattler().restoreAP();
         }
     }
 
     public void update(){
-        if(!getcurrentBattler().isType("player")){
-            Enemy enemy = (Enemy) getcurrentBattler();
+        if(!getCurrentBattler().isType("player")){
+            Enemy enemy = (Enemy) getCurrentBattler();
             enemy.getEnemyAi().decide(enemy);
         }
     }

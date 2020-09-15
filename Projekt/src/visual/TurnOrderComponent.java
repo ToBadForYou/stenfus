@@ -31,17 +31,20 @@ public class TurnOrderComponent extends JPanel implements MapListener
 	    for (int i = 0; i < battlers.size(); i++) {
 		BattleCharacter bc = battlers.get(i);
 
-		if (currentMap.getCurrentBattle().getcurrentBattler().equals(bc)) {
+		if (currentMap.getCurrentBattle().getCurrentBattler().equals(bc)) {
 		    g.setColor(Color.RED);
 		} else {
 		    g.setColor(Color.BLACK);
 		}
-		g.fillRect((i % 4) * (World.TILESIZE + 5) + 5, 5 + (i / 4) * (World.TILESIZE + 5), World.TILESIZE + 4,
-			   World.TILESIZE + 4);
-		g.setColor(Color.WHITE);
-		g.fillRect(7 + (i % 4) * (World.TILESIZE + 5), 7 + (i / 4) * (World.TILESIZE + 5), World.TILESIZE, World.TILESIZE);
 
-		g.drawImage(bc.getImage(),5 + (i % 4) * (World.TILESIZE + 5), 5 + (i / 4) * (World.TILESIZE + 5), this);
+		int spritePosX = (i % 4) * (World.TILE_SIZE + 5);
+		int spritePosY = (i / 4) * (World.TILE_SIZE + 5);
+
+		g.fillRect(spritePosX + 5, 5 + spritePosY, World.TILE_SIZE + 4, World.TILE_SIZE + 4);
+		g.setColor(Color.WHITE);
+		g.fillRect(7 + spritePosX, 7 + spritePosY, World.TILE_SIZE, World.TILE_SIZE);
+
+		g.drawImage(bc.getImage(),5 + spritePosX, 5 + spritePosY, this);
 	    }
 	}
     }
@@ -51,13 +54,11 @@ public class TurnOrderComponent extends JPanel implements MapListener
             currentMap = world.getMapArea(i);
 	    currentMap.addMapListener(this);
 	}
-
 	    repaint();
-
-
     }
 
     @Override public Dimension getPreferredSize(){
-        return new Dimension(PlayerInformation.STATSWIDTH, (World.TILESIZE) + 40);
+        final int height =  World.TILE_SIZE + 40;
+        return new Dimension(PlayerInformation.PLAYER_INFO_WIDTH, height);
     }
 }

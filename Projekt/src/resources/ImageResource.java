@@ -23,8 +23,12 @@ public class ImageResource extends AbstractResource
         loadAllResources("images");
     }
 
-    public BufferedImage getImage(String fileName, Double[] size) {
-        return scale(loadedResources.get(fileName), (int)(size[0]*1), (int)(size[1]*1));
+    public BufferedImage getImage(String fileName, double[] size) {
+        BufferedImage image = loadedResources.get(fileName);
+        if (image == null){
+            image = loadedResources.get("noimage.jpg");
+        }
+        return scale(image, (int)(size[0]*1), (int)(size[1]*1));
     }
 
     public static BufferedImage scale(BufferedImage imageToScale, int dWidth, int dHeight) {
@@ -44,8 +48,9 @@ public class ImageResource extends AbstractResource
             BufferedImage image = ImageIO.read((getURL("images", fileName)));
             loadedResources.put(fileName, image);
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Failed to load image: " + e.getMessage());
-            MessageWindow.showMessage("Failed to load image:" + e.getMessage(), "Loading error, file: " + fileName);
+            String logMessage ="Failed to load image: " + e.getMessage();
+            LOGGER.log(Level.WARNING, logMessage);
+            MessageWindow.showMessage(logMessage, "Loading error, file: " + fileName);
         }
     }
 }

@@ -14,7 +14,10 @@ public abstract class GameObject implements Serializable
     protected int id;
     protected String type;
     protected transient BufferedImage image = null;
-    public transient static ObjectDataHandler objectData = new ObjectDataHandler();
+    /**
+     * Global cache for objects data
+     */
+    public transient static final ObjectDataHandler OBJECT_DATA_HANDLER = new ObjectDataHandler();
 
     protected GameObject(final int id, String type) {
 	this.id = id;
@@ -22,17 +25,17 @@ public abstract class GameObject implements Serializable
 	setImage(id, type);
     }
 
-    public int getId(){
+    public int getID(){
         return id;
     }
 
     public boolean isType(String type){ return type.equals(this.type); }
 
+    public String getType() { return type; }
+
     public void setImage(final int id, final String type){
-	image = objectData.getImage(id, type);
+	image = OBJECT_DATA_HANDLER.getImage(id, type);
     }
 
     public BufferedImage getImage(){ return image; }
-
-    public ObjectDataHandler getObjectData() { return objectData; }
 }
